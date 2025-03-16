@@ -6,7 +6,9 @@
 		"cf-typegen": "wrangler types --env-interface CloudflareBindings"
 	},
 	"dependencies": {
-		"hono": "^4.7.2"
+		"@aws-sdk/client-s3": "3.726.0",
+		"hono": "^4.7.2",
+		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20250214.0",
