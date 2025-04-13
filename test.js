@@ -1,13 +1,16 @@
 import { S3Client, CreateBucketCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { v4 as uuid } from 'uuid';
+import { configDotenv } from 'dotenv';
+
+configDotenv();
 
 // Create an S3 client
 //
 // You must copy the endpoint from your B2 bucket details
 // and set the region to match.
 const s3 = new S3Client({
-  endpoint: 'https://s3.us-west-004.backblazeb2.com',
-  region: 'us-west-004'
+  endpoint: 'https://s3.us-east-005.backblazeb2.com',
+  region: 'us-east-005'
 });
 
 // Create a bucket and upload something into it
