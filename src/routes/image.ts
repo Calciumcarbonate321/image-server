@@ -44,49 +44,6 @@ Images.post('/', async (c) => {
   }
 });
 
-// Bulk upload endpoint
-Images.post('/bulk', async (c) => {
-  try {
-    const formData = await c.req.formData();
-    const files: File[] = [];
-    for (const [key, value] of formData.entries()) {
-      if (value instanceof File && key === 'images') {
-        files.push(value);
-      }
-    }
-    if (files.length === 0) {
-      return c.json({ error: 'No images provided' }, 400);
-    }
-
-    const results = [];
-    for (const imageFile of files) {
-      const imageBytes = await imageFile.arrayBuffer();
-      const fileId = uuidv4();
-      await c.env.IMAGES_BUCKET.put(fileId, imageBytes, {
-        httpMetadata: {
-          contentType: imageFile.type,
-        },
-        customMetadata: {
-          filename: imageFile.name,
-        },
-      });
-      results.push({
-        fileId,
-        filename: imageFile.name,
-        size: imageBytes.byteLength,
-      });
-    }
-    return c.json({
-      success: true,
-      message: 'Bulk upload completed',
-      uploaded: results,
-    });
-  } catch (error) {
-    console.error('Error in bulk upload:', error);
-    return c.json({ error: 'Failed to process bulk upload' }, 500);
-  }
-});
-
 Images.get("/", async(c)=> {
   try {
     const objects = await c.env.IMAGES_BUCKET.list();
@@ -119,7 +76,7 @@ Images.get("/all", async(c)=> {
                   margin: 10px;
                   object-fit: cover;
               }
-              #uploadButton, #bulkUploadButton {
+              #uploadButton {
                   padding: 5px 10px;
                   font-size: 12px;
                   cursor: pointer;
@@ -136,11 +93,6 @@ Images.get("/all", async(c)=> {
 <form id="uploadForm" enctype="multipart/form-data" action="/image/">
               <input type="file" id="imageUpload" name="image" accept="image/*">
               <button type="submit" id="uploadButton">Upload New Image</button>
-          </form>
-          <hr>
-          <form id="bulkUploadForm" enctype="multipart/form-data" action="/image/bulk">
-              <input type="file" id="bulkImageUpload" name="images" accept="image/*" multiple>
-              <button type="submit" id="bulkUploadButton">Bulk Upload Images</button>
           </form>
           <div class="gallery" id="imageGallery"></div>
           <script>
@@ -160,7 +112,7 @@ async function fetchImages() {
                       idElement.textContent = \`Image ID: \${image.id}\`;
                       idElement.classList.add('idContainer');
 
-                      const imageContainer = document.createElement('div');
+const imageContainer = document.createElement('div');
                       imageContainer.appendChild(img);
                       imageContainer.appendChild(idElement);
 
@@ -213,37 +165,6 @@ async function fetchImages() {
                   }
               });
 
-              // Bulk upload handler
-              document.getElementById('bulkUploadForm').addEventListener('submit', async (event) => {
-                  event.preventDefault();
-                  const input = document.getElementById('bulkImageUpload');
-                  const files = input.files;
-                  if (!files || files.length === 0) {
-                      alert('Please select at least one image.');
-                      return;
-                  }
-                  const formData = new FormData();
-                  for (let i = 0; i < files.length; i++) {
-                      formData.append('images', files[i]);
-                  }
-                  try {
-                      const response = await fetch('/image/bulk', {
-                          method: 'POST',
-                          body: formData,
-                      });
-                      if (response.ok) {
-                          alert('Bulk upload successful!');
-                          fetchImages();
-                      } else {
-                          const errorText = await response.text();
-                          alert(\`Bulk upload failed: \${errorText}\`);
-                      }
-                  } catch (error) {
-                      console.error('Bulk upload error:', error);
-                      alert(\`Bulk upload failed: \${error}\`);
-                  }
-              });
-
               fetchImages();
           </script>
       </body>
@@ -281,6 +202,7 @@ Images.get('/:fileId', async (c) => {
   try {
     const fileId = c.req.param('fileId');
     const objects = await c.env.IMAGES_BUCKET.list();
+    console.log(objects)
     if (!validateUuid(fileId)) {
       return c.json({ error: 'Invalid file ID format' }, 400);
     }
